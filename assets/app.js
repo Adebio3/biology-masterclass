@@ -9,6 +9,7 @@
     return `<${open ? 'a href="' + href + '"' : 'div'} class="ch2 ${c.status}" style="--c:${c.colour}"><span class="n">${c.n}</span><span class="t"><b>${esc(c.title)}</b>${c.summary ? `<small>${esc(c.summary)}</small>` : ''}</span>${c.status === 'ready' ? '<span class="go">›</span>' : `<span class="badge ${c.status}">${label[c.status]}</span>`}</${open ? 'a' : 'div'}>`; };
   if (page === 'course') {
     const key = document.body.dataset.course, C = S.courses[key];
+    const hero = document.querySelector('.hero'); if (hero && !document.querySelector('.backlink')) hero.insertAdjacentHTML('beforebegin', '<a class="backlink" href="../index.html">‹ Home</a>');
     $('#title').textContent = C.title; $('#code').textContent = 'Syllabus ' + C.code; $('#blurb').textContent = C.blurb;
     const groups = {}; C.chapters.forEach((c) => (groups[c.level] = groups[c.level] || []).push(c));
     $('#chapters').innerHTML = Object.entries(groups).map(([lv, list]) => `<section class="sec"><h2>${lv === 'AS' ? 'AS Level' : lv === 'IGCSE' ? 'Topics' : lv}</h2><div class="grid2">${list.map((c) => card(c, `chapter.html?c=${c.n}`)).join('')}</div></section>`).join('');
@@ -25,6 +26,7 @@
     const nv = (c.videos || []).length, ready = c.status === 'ready';
     const nOut = (c.outcomes || []).length;
     $('#main').innerHTML = `
+      <a class="backlink" href="index.html">‹ All chapters</a>
       <div class="chband"><div class="chband-in"><div class="chnum">${c.n}</div><div><div class="kick">Chapter ${c.n} · ${c.level} · Syllabus ${C.code}</div><h1>${esc(c.title)}</h1><p>${esc(c.summary || '')}</p></div></div>
         <nav class="chpn">${prev ? `<a href="chapter.html?c=${prev.n}" aria-label="Previous chapter">‹ ${prev.n}</a>` : ''}${next ? `<a href="chapter.html?c=${next.n}" aria-label="Next chapter">${next.n} ›</a>` : ''}</nav></div>
       <div class="groups">
