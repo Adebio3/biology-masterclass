@@ -5,13 +5,13 @@
   const ytId = (u) => { const m = String(u).match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/); return m ? m[1] : null; };
   const has = (c) => ({ i: !!c.interactive, v: !!(c.videos && c.videos.length), b: !!(c.coursebook && c.coursebook.length), p: !!c.practice || !!(c.official && c.official.length) });
   const label = { ready: 'Ready', building: 'In progress', soon: 'Coming soon' };
-  const card = (c, href) => { const h = has(c); const open = c.status !== 'soon' && href;
-    return `<${open ? 'a href="' + href + '"' : 'div'} class="ch ${c.status}" style="--c:${c.colour}"><span class="num">Chapter ${c.n} · ${c.level} <span class="badge ${c.status}">${label[c.status]}</span></span><h3>${esc(c.title)}</h3>${c.summary ? `<p>${esc(c.summary)}</p>` : ''}${c.status !== 'soon' ? `<div class="icons"><span class="pill ${h.i ? '' : 'off'}">🧪 Interactive</span><span class="pill ${h.v ? '' : 'off'}">🎬 Videos</span><span class="pill ${h.b ? '' : 'off'}">📘 Notes</span><span class="pill ${h.p ? '' : 'off'}">📝 Practice</span>${c.status === 'ready' ? '<span class="pill">🃏 Flashcards</span><span class="pill">🧠 Mind map</span>' : ''}</div>` : ''}</${open ? 'a' : 'div'}>`; };
+  const card = (c, href) => { const open = c.status !== 'soon' && href;
+    return `<${open ? 'a href="' + href + '"' : 'div'} class="ch2 ${c.status}" style="--c:${c.colour}"><span class="n">${c.n}</span><span class="t"><b>${esc(c.title)}</b>${c.summary ? `<small>${esc(c.summary)}</small>` : ''}</span>${c.status === 'ready' ? '<span class="go">›</span>' : `<span class="badge ${c.status}">${label[c.status]}</span>`}</${open ? 'a' : 'div'}>`; };
   if (page === 'course') {
     const key = document.body.dataset.course, C = S.courses[key];
     $('#title').textContent = C.title; $('#code').textContent = 'Syllabus ' + C.code; $('#blurb').textContent = C.blurb;
     const groups = {}; C.chapters.forEach((c) => (groups[c.level] = groups[c.level] || []).push(c));
-    $('#chapters').innerHTML = Object.entries(groups).map(([lv, list]) => `<section class="sec"><h2>${lv === 'AS' ? 'AS Level' : lv === 'IGCSE' ? 'Topics' : lv}</h2><div class="grid">${list.map((c) => card(c, `chapter.html?c=${c.n}`)).join('')}</div></section>`).join('');
+    $('#chapters').innerHTML = Object.entries(groups).map(([lv, list]) => `<section class="sec"><h2>${lv === 'AS' ? 'AS Level' : lv === 'IGCSE' ? 'Topics' : lv}</h2><div class="grid2">${list.map((c) => card(c, `chapter.html?c=${c.n}`)).join('')}</div></section>`).join('');
   }
   if (page === 'chapter') {
     const C = S.courses[document.body.dataset.course], n = +(new URLSearchParams(location.search).get('c') || 1), c = C.chapters.find((x) => x.n === n) || C.chapters[0];
@@ -21,28 +21,36 @@
     const links = (arr, ic) => arr && arr.length ? `<ul class="list">${arr.map((x) => `<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${ic} ${esc(x.title)}</a></li>`).join('')}</ul>` : '';
     const key = 'bm.out.' + document.body.dataset.course + '.' + c.n; let done = {}; try { done = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
     const prev = C.chapters.find((x) => x.n === c.n - 1), next = C.chapters.find((x) => x.n === c.n + 1);
+    const R = (href, ic, t, d, opt = {}) => href ? `<a class="res" href="${esc(href)}" ${opt.ext ? 'target="_blank" rel="noopener"' : ''}><span class="ico">${ic}</span><span class="rt"><b>${t}</b><small>${d}</small></span><span class="go">›</span></a>` : `<div class="res off"><span class="ico">${ic}</span><span class="rt"><b>${t}</b><small>Coming soon</small></span></div>`;
+    const nv = (c.videos || []).length, ready = c.status === 'ready';
+    const nOut = (c.outcomes || []).length;
     $('#main').innerHTML = `
-      <div class="chhero"><div class="num">Chapter ${c.n} · ${c.level} · Syllabus ${C.code} <span class="badge ${c.status}">${label[c.status]}</span></div><h1>${esc(c.title)}</h1><p>${esc(c.summary || '')}</p></div>
-      <div class="tiles">
-        <div class="tile"><div class="ic">🧪</div><h3>Interactive lesson</h3><p>Guided lessons with check questions, live simulations, teacher mode, an exam-style quiz and class games. Works offline on phones.</p><div class="row">${c.interactive ? `<a class="btn pri" href="${esc(c.interactive)}">Open interactive</a><a class="btn" href="${esc(c.interactive)}" download>Download</a>` : '<span class="empty">Being built: coming soon</span>'}</div></div>
-        <div class="tile"><div class="ic">🎬</div><h3>Animated videos</h3><p>Short animated explanations of the hardest processes in this chapter.</p><div class="row">${c.videos && c.videos.length ? `<a class="btn pri" href="#videos">Watch (${c.videos.length})</a>` : ''}<a class="btn" href="${S.youtube}" target="_blank" rel="noopener">YouTube channel</a></div></div>
-        <div class="tile"><div class="ic">📘</div><h3>Coursebook and notes</h3><p>The full coursebook chapter: explanations, worked examples, practice and answers. Print it or read it on screen.</p><div class="row">${c.coursebook && c.coursebook.length ? `<a class="btn pri" href="${esc(c.coursebook[0].url)}" target="_blank" rel="noopener">Read</a><a class="btn" href="${esc(c.coursebook[0].url)}" download>Download</a>` : '<span class="empty">Coming soon</span>'}</div></div>
-        <div class="tile"><div class="ic">📝</div><h3>Topic exam practice</h3><p>Paper 1 (multiple choice) and Paper 2 (structured) questions on this chapter, with mark schemes.</p><div class="row">${c.practice ? `<a class="btn pri" href="${esc(c.practice)}">Practice questions</a>` : ''}<a class="btn" href="#papers">Past papers</a></div></div>
+      <div class="chband"><div class="chband-in"><div class="chnum">${c.n}</div><div><div class="kick">Chapter ${c.n} · ${c.level} · Syllabus ${C.code}</div><h1>${esc(c.title)}</h1><p>${esc(c.summary || '')}</p></div></div>
+        <nav class="chpn">${prev ? `<a href="chapter.html?c=${prev.n}" aria-label="Previous chapter">‹ ${prev.n}</a>` : ''}${next ? `<a href="chapter.html?c=${next.n}" aria-label="Next chapter">${next.n} ›</a>` : ''}</nav></div>
+      <div class="groups">
+        <section class="group"><h2><span>1</span> Learn</h2>
+          ${R(c.interactive, '🧪', 'Interactive lesson', 'Lessons, simulations, quiz and class games')}
+          ${R(nv ? '#videos' : '', '🎬', 'Videos', nv + (nv === 1 ? ' animated video' : ' animated videos'))}
+          ${R(c.coursebook && c.coursebook.length ? c.coursebook[0].url : '', '📘', 'Coursebook', 'Read online or download the PDF', { ext: 1 })}
+        </section>
+        <section class="group"><h2><span>2</span> Revise</h2>
+          ${R(ready ? `flashcards.html?c=${c.n}` : '', '🃏', 'Flashcards', 'Key terms: flip, shuffle, track progress')}
+          ${R(ready ? `mindmap.html?c=${c.n}` : '', '🧠', 'Mind map', 'The whole chapter on one page')}
+          ${R(ready ? `board.html?c=${c.n}` : '', '✏️', 'Board', 'Write and draw: white or black board')}
+          ${R(nOut ? '#checklist' : '', '✅', 'Syllabus checklist', nOut + ' learning outcomes to tick off')}
+        </section>
+        <section class="group"><h2><span>3</span> Practise</h2>
+          ${R(c.practice, '📝', 'Topic questions', 'Paper 1 and Paper 2 style, with mark schemes')}
+          ${R('#papers', '📄', 'Past papers', 'Official Cambridge papers for this topic')}
+        </section>
       </div>
-      ${c.status === 'ready' ? `<section class="sec"><h2>Revise</h2><div class="tiles">
-        <a class="tile" href="flashcards.html?c=${c.n}" style="text-decoration:none"><div class="ic">🃏</div><h3>Flashcards</h3><p>Key terms and definitions. Flip, shuffle and track what you know.</p><span class="btn pri" style="margin-top:auto">Open flashcards</span></a>
-        <a class="tile" href="mindmap.html?c=${c.n}" style="text-decoration:none"><div class="ic">🧠</div><h3>Mind map</h3><p>The whole chapter on one page. Hide the branches to test yourself.</p><span class="btn pri" style="margin-top:auto">Open mind map</span></a>
-        <a class="tile" href="board.html?c=${c.n}" style="text-decoration:none"><div class="ic">✏️</div><h3>Board</h3><p>A white or black board to write and draw on with your finger, stylus or mouse.</p><span class="btn pri" style="margin-top:auto">Open board</span></a>
-      </div></section>` : ''}
-      ${c.outcomes ? `<section class="sec"><h2>Syllabus checklist</h2><p class="note">Tick each learning outcome when you can do it. Your ticks are saved on this device.</p><div class="prog"><i id="pbar"></i></div><ul class="outcomes">${c.outcomes.map((o, i) => `<li><label><input type="checkbox" data-i="${i}" ${done[i] ? 'checked' : ''}> <span>${esc(o)}</span></label></li>`).join('')}</ul></section>` : ''}
-      <section class="sec" id="videos"><h2>🎬 Videos</h2>${vids ? `<div class="videos">${vids}</div>` : `<p class="empty">Videos for this chapter are in production. Subscribe at <a href="${S.youtube}" target="_blank" rel="noopener">${S.youtube.replace('https://www.', '')}</a>.</p>`}</section>
-      <section class="sec" id="notes"><h2>📘 Coursebook and notes</h2>${links(c.coursebook, '📄') || '<p class="empty">Coming soon.</p>'}</section>
-      <section class="sec" id="papers"><h2>📝 Exam practice</h2>
-        ${c.practice ? `<ul class="list"><li><a href="${esc(c.practice)}">✍️ Topic questions: Paper 1 and Paper 2 style, with mark schemes</a></li></ul>` : '<p class="empty">Topic questions coming soon.</p>'}
-        <h3 style="margin-top:18px;font-size:17px">Official Cambridge past papers on this topic</h3>
-        ${links(c.official, '📄') || ''}<p class="note">Official past papers and mark schemes are © Cambridge University Press &amp; Assessment. Teachers can download them from the <a href="${S.supportHub}" target="_blank" rel="noopener">School Support Hub</a>.</p></section>
-      <nav class="pn">${prev ? `<a class="btn" href="chapter.html?c=${prev.n}">← Chapter ${prev.n}</a>` : '<span></span>'}${next ? `<a class="btn" href="chapter.html?c=${next.n}">Chapter ${next.n} →</a>` : ''}</nav>`;
-    const upd = () => { const bs = [...document.querySelectorAll('.outcomes input')]; const k = bs.filter((b) => b.checked).length; const p = $('#pbar'); if (p) p.style.width = (bs.length ? k / bs.length * 100 : 0) + '%'; };
+      ${nv ? `<section class="sec" id="videos"><h2>Videos</h2><div class="videos">${vids}</div></section>` : ''}
+      ${nOut ? `<section class="sec" id="checklist"><details class="ck"${location.hash === '#checklist' ? ' open' : ''}><summary><h2 style="margin:0">Syllabus checklist</h2><span class="ckc" id="ckc"></span></summary><p class="note" style="margin-top:12px">Tick each learning outcome when you can do it. Your ticks are saved on this device.</p><div class="prog"><i id="pbar"></i></div><ul class="outcomes">${c.outcomes.map((o, i) => `<li><label><input type="checkbox" data-i="${i}" ${done[i] ? 'checked' : ''}> <span>${esc(o)}</span></label></li>`).join('')}</ul></details></section>` : ''}
+      <section class="sec" id="papers"><details class="ck"${location.hash === '#papers' ? ' open' : ''}><summary><h2 style="margin:0">Official past papers</h2></summary>
+        ${links(c.official, '📄')}<p class="note" style="margin-top:12px">Official past papers and mark schemes are © Cambridge University Press &amp; Assessment, so they are not reproduced here. Teachers can download them from the <a href="${S.supportHub}" target="_blank" rel="noopener">School Support Hub</a>. For original exam-style questions on this chapter, use <b>Topic questions</b> above.</p></details></section>
+      <nav class="pn">${prev ? `<a class="btn" href="chapter.html?c=${prev.n}">← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a class="btn" href="chapter.html?c=${next.n}">${esc(next.title)} →</a>` : ''}</nav>`;
+    document.querySelectorAll('a.res[href^="#"]').forEach((l) => l.addEventListener('click', () => { const d = document.querySelector(l.getAttribute('href') + ' details'); if (d) d.open = true; }));
+    const upd = () => { const bs = [...document.querySelectorAll('.outcomes input')]; const k = bs.filter((b) => b.checked).length; const p = $('#pbar'); if (p) p.style.width = (bs.length ? k / bs.length * 100 : 0) + '%'; const cc = $('#ckc'); if (cc) cc.textContent = k + ' / ' + bs.length; };
     document.querySelectorAll('.outcomes input').forEach((b) => b.addEventListener('change', () => { done[b.dataset.i] = b.checked; try { localStorage.setItem(key, JSON.stringify(done)); } catch (e) {} upd(); })); upd();
   }
   if (page === 'home') {
