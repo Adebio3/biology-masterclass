@@ -35,7 +35,7 @@ window.SITE = {
             'Describe the structure of a prokaryotic cell and compare it with eukaryotic cells',
             'State that viruses are non-cellular, with nucleic acid in a protein capsid and sometimes an envelope',
           ],
-          videos: [], coursebook: [{ title: 'Chapter 1 Cell structure: coursebook chapter (PDF, 30 pages)', url: 'coursebook/chapter-01-cell-structure.pdf' }], practice: 'practice/chapter-01.html', official: [] },
+          videos: [{ title: 'Making and exporting a protein: the secretory pathway', url: 'https://youtu.be/71uzirI-uTQ' }], coursebook: [{ title: 'Chapter 1 Cell structure: coursebook chapter (PDF, 30 pages)', url: 'coursebook/chapter-01-cell-structure.pdf' }], practice: 'practice/chapter-01.html', official: [] },
         { n: 2, level: 'AS', title: 'Biological molecules', status: 'ready', colour: '#b45309', interactive: '../interactives/Biological_Molecules_Interactive.html', summary: 'Food tests, carbohydrates, lipids, proteins and water.', videos: [], coursebook: [], practice: '', official: [] },
         { n: 3, level: 'AS', title: 'Enzymes', status: 'ready', colour: '#0f766e', interactive: '../interactives/Enzymes_Interactive.html', summary: 'Mode of action, measuring rates, factors, Vmax and Km, inhibitors and immobilised enzymes.', videos: [], coursebook: [], practice: '', official: [] },
         { n: 4, level: 'AS', title: 'Cell membranes and transport', status: 'ready', colour: '#7c3aed', interactive: '../interactives/Cell_Membranes_Interactive.html', summary: 'Fluid mosaic model, cell signalling, diffusion, osmosis, active transport and bulk transport.', videos: [], coursebook: [], practice: '', official: [] },
