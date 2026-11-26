@@ -50,3 +50,5 @@ a.ch:hover{transform:translateY(-2px);box-shadow:0 8px 20px -12px rgba(0,0,0,.35
 footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:13px;margin-top:40px}
 .note{font-size:14px;color:var(--muted);background:var(--soft);padding:12px 14px;border-radius:12px}
 @media (max-width:600px){.hero{padding:34px 0 16px}nav.crumbs{display:none}.wrap{padding:0 14px}}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
+.datatab{border-collapse:collapse;font-size:15px}.datatab th,.datatab td{border:1px solid var(--line);padding:6px 10px;text-align:center}.datatab th{background:var(--soft)}
