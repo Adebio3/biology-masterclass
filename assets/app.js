@@ -42,7 +42,7 @@
           ${R(nOut ? '#checklist' : '', '✅', 'Syllabus checklist', nOut + ' learning outcomes to tick off')}
         </section>
         <section class="group"><h2><span>3</span> Practise</h2>
-          ${R(c.practice, '📝', 'Topic questions', 'Paper 1 and Paper 2 style, with mark schemes')}
+          ${R(c.practice, '📝', 'Topic questions', c.n >= 12 ? 'Multiple choice and Paper 4 style, with mark schemes' : 'Paper 1 and Paper 2 style, with mark schemes')}
           ${R('#papers', '📄', 'Past papers', 'Official Cambridge papers for this topic')}
         </section>
       </div>
