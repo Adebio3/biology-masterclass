@@ -1,7 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"><script id="bm-bridge">window.BM_CH=14;
+/* Biology Masterclass: class list, photos and results.
+   Everything is stored only in this browser (localStorage). Nothing is uploaded. */
+(function () {
+  var KR = 'bm.roster', KS = 'bm.results', KL = 'bm.last';
+  var DEFAULT = ['Elif', 'Semanur', 'Mahira', 'Ilham', 'Jada', 'Nyasha', 'Zikurullah'];
+  var LS = window.localStorage;
+  var raw = function (k) { try { return Storage.prototype.getItem.call(LS, k); } catch (e) { return null; } };
+  var put = function (k, v) { try { Storage.prototype.setItem.call(LS, k, v); return true; } catch (e) { return false; } };
+  var read = function (k, d) { var v = raw(k); if (v == null) return d; try { return JSON.parse(v); } catch (e) { return d; } };
+  var uid = function () { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
+
+  function seedNames() {
+    // reuse names a teacher already typed into the games, if any
+    try { for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (/^tp[0-9a-z]*\.g\.names$/.test(k)) { var n = JSON.parse(raw(k)); if (Array.isArray(n) && n.length) return n; } } } catch (e) {}
+    return DEFAULT;
+  }
+  var BM = window.BM = {
+    DEFAULT: DEFAULT,
+    roster: function () { var r = read(KR, null); if (!r) { r = seedNames().map(function (n) { return { id: uid(), name: n, photo: '' }; }); put(KR, JSON.stringify(r)); } return r; },
+    saveRoster: function (r) { return put(KR, JSON.stringify(r)); },
+    names: function () { return BM.roster().map(function (s) { return s.name; }); },
+    byName: function (n) { n = String(n || '').trim().toLowerCase(); var r = BM.roster(); for (var i = 0; i < r.length; i++) if (r[i].name.toLowerCase() === n) return r[i]; return null; },
+    add: function (name, photo) { var r = BM.roster(); name = String(name || '').trim(); if (!name || BM.byName(name)) return null; var s = { id: uid(), name: name, photo: photo || '' }; r.push(s); BM.saveRoster(r); return s; },
+    update: function (id, patch) { var r = BM.roster(); r.forEach(function (s) { if (s.id === id) for (var k in patch) s[k] = patch[k]; }); return BM.saveRoster(r); },
+    remove: function (id) { BM.saveRoster(BM.roster().filter(function (s) { return s.id !== id; })); },
+    // keep the roster in step with a plain list of names (e.g. edited inside a game)
+    syncNames: function (list) {
+      var r = BM.roster(), out = [];
+      list.forEach(function (n) { n = String(n).trim(); if (!n) return; var s = r.filter(function (x) { return x.name.toLowerCase() === n.toLowerCase(); })[0]; out.push(s || { id: uid(), name: n, photo: '' }); });
+      BM.saveRoster(out);
+    },
+    results: function () { return read(KS, []); },
+    record: function (o) {
+      // o: { name, k: 'game'|'quiz'|'practice', ch, sc, mx }
+      var s = BM.byName(o.name); if (!s) return;
+      var a = BM.results(); a.push({ t: Date.now(), s: s.id, n: s.name, k: o.k, ch: o.ch || 0, sc: o.sc, mx: o.mx || 0 });
+      if (a.length > 6000) a = a.slice(a.length - 6000);
+      put(KS, JSON.stringify(a));
+    },
+    clearResults: function () { put(KS, '[]'); },
+    last: function (v) { if (v === undefined) return raw(KL) || ''; put(KL, v); },
+    summary: function () {
+      var r = BM.roster(), res = BM.results(), m = {};
+      r.forEach(function (s) { m[s.id] = { s: s, game: 0, quiz: [0, 0, 0], prac: [0, 0, 0], last: 0, ch: {} }; });
+      res.forEach(function (x) {
+        var e = m[x.s]; if (!e) return; e.last = Math.max(e.last, x.t);
+        var c = e.ch[x.ch] || (e.ch[x.ch] = { game: 0, quiz: [], prac: [] });
+        if (x.k === 'game') { e.game += x.sc; c.game += x.sc; }
+        else if (x.mx) { var p = x.sc / x.mx; var b = x.k === 'quiz' ? e.quiz : e.prac; b[0] += x.sc; b[1] += x.mx; b[2]++; (x.k === 'quiz' ? c.quiz : c.prac).push(Math.round(p * 100)); }
+      });
+      return r.map(function (s) { return m[s.id]; });
+    },
+    exportData: function () { return JSON.stringify({ app: 'biology-masterclass', v: 1, saved: new Date().toISOString(), roster: BM.roster(), results: BM.results() }); },
+    importData: function (txt) { var d = JSON.parse(txt); if (!d || !Array.isArray(d.roster)) throw new Error('Not a Biology Masterclass backup file'); put(KR, JSON.stringify(d.roster)); put(KS, JSON.stringify(d.results || [])); },
+    // a small round picture, or coloured initials when there is no photo
+    avatar: function (name, size) {
+      size = size || 32; var s = BM.byName(name); var st = 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;flex:none;display:inline-grid;place-items:center;vertical-align:middle;object-fit:cover;';
+      if (s && s.photo) return '<img class="bm-av" alt="" src="' + s.photo + '" style="' + st + '">';
+      var h = 0, t = String(name || '?'); for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 360;
+      var ini = t.split(/\s+/).map(function (w) { return w[0] || ''; }).join('').slice(0, 2).toUpperCase();
+      return '<span class="bm-av" aria-hidden="true" style="' + st + 'background:hsl(' + h + ' 65% 45%);color:#fff;font:700 ' + Math.round(size * 0.42) + 'px/1 sans-serif">' + ini + '</span>';
+    },
+    // resize a chosen image file to a small square JPEG (keeps storage small)
+    photoFromFile: function (file, cb) {
+      var fr = new FileReader();
+      fr.onload = function () { var img = new Image(); img.onload = function () { var S = 160, c = document.createElement('canvas'); c.width = c.height = S; var m = Math.min(img.width, img.height); c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S); cb(c.toDataURL('image/jpeg', 0.8)); }; img.onerror = function () { cb(''); }; img.src = fr.result; };
+      fr.readAsDataURL(file);
+    },
+    // name picker used before quizzes and topic questions
+    picker: function (label) {
+      var r = BM.roster(), last = BM.last();
+      return '<label class="bm-pick" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0"><b>' + (label || 'Who is answering?') + '</b><select class="bm-who" style="font-size:16px;padding:6px 10px;border-radius:10px;border:1px solid #cbd5e1"><option value="">Not recorded</option>' + r.map(function (s) { return '<option' + (s.name === last ? ' selected' : '') + '>' + s.name.replace(/</g, '&lt;') + '</option>'; }).join('') + '</select></label>';
+    },
+  };
+})();
+
+(function () {
+  if (!window.BM) return;
+  var CH = window.BM_CH || 0;
+  try { BM.roster(); } catch (e) { return; } // seed once before hooking
+  var gi = Storage.prototype.getItem, si = Storage.prototype.setItem;
+  var isNames = function (k) { return /^tp[0-9a-z]*\.g\.names$/.test(k); }, isScores = function (k) { return /^tp[0-9a-z]*\.g\.scores$/.test(k); };
+  Storage.prototype.getItem = function (k) { if (this === window.localStorage && isNames(k)) return JSON.stringify(BM.names()); return gi.call(this, k); };
+  Storage.prototype.setItem = function (k, v) {
+    if (this === window.localStorage) {
+      if (isNames(k)) { try { BM.syncNames(JSON.parse(v)); } catch (e) {} }
+      else if (isScores(k)) { try { var o = JSON.parse(gi.call(this, k) || '{}'), n = JSON.parse(v); for (var p in n) { var d = (n[p] || 0) - (o[p] || 0); if (d > 0) BM.record({ name: p, k: 'game', ch: CH, sc: d }); } } catch (e) {} }
+    }
+    return si.call(this, k, v);
+  };
+  var online = /^https?:/.test(location.protocol);
+  var css = document.createElement('style');
+  css.textContent = '.gname .bm-av,.glead .bm-av{margin-right:6px}.gflick .bm-av{margin-right:10px}.bm-big{display:flex;justify-content:center;margin:0 0 10px}.bm-big .bm-av{box-shadow:0 0 0 5px #fff,0 6px 20px rgba(0,0,0,.25)}.bm-pick select{background:#fff;color:#0f172a}';
+  document.head.appendChild(css);
+  var first = function (el) { for (var i = 0; i < el.childNodes.length; i++) { var c = el.childNodes[i]; if (c.nodeType === 3 && c.textContent.trim()) return c; } return null; };
+  function deco(root) {
+    var q = function (s) { return root.querySelectorAll ? root.querySelectorAll(s) : []; };
+    q('.gname:not([data-bm])').forEach(function (el) { el.dataset.bm = 1; var t = first(el); if (t) el.insertAdjacentHTML('afterbegin', BM.avatar(t.textContent.trim(), 26)); });
+    q('.glead li > span:not([data-bm]):not(.bm-av)').forEach(function (el) { el.dataset.bm = 1; var nm = el.textContent.replace('🏆', '').trim(); el.insertAdjacentHTML('afterbegin', BM.avatar(nm, 24)); });
+    q('.gflick:not([data-bm])').forEach(function (el) { el.dataset.bm = 1; el.insertAdjacentHTML('afterbegin', BM.avatar(el.textContent.trim(), 46)); });
+    q('.gwho:not([data-bm])').forEach(function (el) { el.dataset.bm = 1; el.insertAdjacentHTML('beforebegin', '<div class="bm-big">' + BM.avatar(el.textContent.trim(), 110) + '</div>'); });
+    q('#gEdit:not([data-bm])').forEach(function (el) { el.dataset.bm = 1; if (online) el.insertAdjacentHTML('afterend', '<a class="btn" href="../settings.html" target="_top">⚙️ Class &amp; photos</a>'); });
+    q('.qbox').forEach(function (box) { var pv = box.previousElementSibling; if (!pv || !pv.classList.contains('bm-pick')) { box.insertAdjacentHTML('beforebegin', BM.picker('Who is taking this quiz?')); var s = box.previousElementSibling.querySelector('select'); s.onchange = function () { BM.last(s.value); }; } });
+    q('.qbox .score:not([data-bm])').forEach(function (el) { el.dataset.bm = 1; var m = el.textContent.match(/(\d+)\s*\/\s*(\d+)/); var box = el.closest('.qbox'), pk = box && box.previousElementSibling, who = pk && pk.querySelector && pk.querySelector('select'); if (m && who && who.value) { BM.record({ name: who.value, k: 'quiz', ch: CH, sc: +m[1], mx: +m[2] }); el.insertAdjacentHTML('afterend', '<p style="margin:4px 0;font-size:14px">✅ Saved to ' + who.value.replace(/</g, '&lt;') + '’s record</p>'); } });
+  }
+  var start = function () { deco(document); new MutationObserver(function (ms) { ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { deco(n.parentNode || n); } }); }); }).observe(document.body, { childList: true, subtree: true }); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  if (online && 'serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('../sw.js').catch(function () {}); });
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Homeostasis</title>
 <style>

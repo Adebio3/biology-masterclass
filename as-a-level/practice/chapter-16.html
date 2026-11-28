@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><link rel="manifest" href="../../manifest.webmanifest"><meta name="theme-color" content="#15803d"><link rel="apple-touch-icon" href="../../icons/icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chapter 16 Inheritance: topic questions · Biology Masterclass</title>
 <link rel="stylesheet" href="../../assets/fonts.css"><link rel="stylesheet" href="../../assets/style.css">
 <style>
@@ -13,8 +13,8 @@ body{--c:#6d28d9} .paper{background:var(--card);border:1px solid var(--line);bor
 .ws{border-bottom:1px dotted #94a3b8;height:30px} .score{font:700 20px Lexend,sans-serif}
 ol.mcq{padding-left:22px}
 @media print{header,footer,.noprint,.ms summary{display:none!important} .ms{display:none} body.withms .ms{display:block!important;background:none} body.withms .ms[open],body.withms details.ms>ul{display:block} .paper{border:0;padding:0} .mq{break-inside:avoid} .p2q{break-inside:avoid} }
-</style></head><body data-page="practice" data-root="../..">
-<header class="top"><div class="wrap"><a class="logo" href="../../index.html"><i>B</i><span>Biology Masterclass<small>by Prohabs</small></span></a><nav class="crumbs"><a href="../index.html">AS &amp; A Level 9700</a><a href="../chapter.html?c=16">Chapter 16</a><a aria-current="page">Topic questions</a></nav></div></header>
+</style></head><body data-page="practice" data-ch="16" data-root="../..">
+<header class="top"><div class="wrap"><a class="logo" href="../../index.html"><i>B</i><span>Biology Masterclass<small>by Prohabs</small></span></a><nav class="crumbs"><a href="../index.html">AS &amp; A Level 9700</a><a href="../chapter.html?c=16">Chapter 16</a><a aria-current="page">Topic questions</a><a href="../../settings.html">⚙️ Settings</a></nav></div></header>
 <main class="wrap"><a class="backlink" href="../chapter.html?c=16">‹ Chapter 16</a>
 <div class="chhero" style="--c:#6d28d9"><div class="num">Chapter 16 · Inheritance · Syllabus 9700</div><h1>Topic questions</h1><p>Original multiple-choice questions and structured questions in the style of Paper 4 (A Level structured questions), with mark schemes. Answer on screen, or print for class.</p>
 <div class="row noprint" style="margin-top:12px"><a class="btn" href="#p1">Multiple choice (20 marks)</a><a class="btn" href="#p2">Paper 4 style (28 marks)</a><button class="btn" onclick="document.body.classList.remove('withms');print()">Print questions</button><button class="btn" onclick="document.body.classList.add('withms');document.querySelectorAll('.ms').forEach(d=>d.open=true);print()">Print with mark scheme</button></div></div>
@@ -30,4 +30,10 @@ ol.mcq{padding-left:22px}
 const qs=[...document.querySelectorAll('.mq')];
 document.getElementById('mark').onclick=()=>{let s=0;qs.forEach(q=>{const a=+q.dataset.a,p=q.querySelector('input:checked');q.querySelectorAll('label').forEach((l,j)=>{l.classList.toggle('pick',!!p&&+p.value===j);l.classList.toggle('ans',j===a)});const ok=p&&+p.value===a;if(ok)s++;q.classList.toggle('ok',!!ok);q.classList.toggle('no',!ok);q.querySelector('.why').hidden=false});document.getElementById('score').textContent=s+' / '+qs.length;};
 document.getElementById('reset').onclick=()=>{qs.forEach(q=>{q.classList.remove('ok','no');q.querySelectorAll('input').forEach(i=>i.checked=false);q.querySelectorAll('label').forEach(l=>l.classList.remove('pick','ans'));q.querySelector('.why').hidden=true});document.getElementById('score').textContent=''};
+</script><script src="../../assets/classroom.js"></script><script>
+(function(){var mk=document.getElementById('mark'),row=mk.parentNode,N=+(document.body.dataset.ch||0),done=false;
+row.insertAdjacentHTML('beforebegin',BM.picker('Who is answering?'));var who=row.previousElementSibling.querySelector('select');who.onchange=function(){BM.last(who.value)};
+mk.addEventListener('click',function(){var m=(document.getElementById('score').textContent||'').match(/(\d+)\s*\/\s*(\d+)/);if(!m||!who.value||done)return;done=true;BM.record({name:who.value,k:'practice',ch:N,sc:+m[1],mx:+m[2]});document.getElementById('score').insertAdjacentHTML('afterend','<span class="note" id="saved"> ✅ Saved to '+who.value.replace(/</g,'&lt;')+'’s record</span>')});
+document.getElementById('reset').addEventListener('click',function(){done=false;var s=document.getElementById('saved');if(s)s.remove()});
+if('serviceWorker'in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('../../sw.js').catch(function(){});})();
 </script></body></html>

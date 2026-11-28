@@ -59,6 +59,22 @@
     const A = S.courses.alevel; const ready = A.chapters.filter((c) => c.status === 'ready').length;
     $('#alstat').textContent = `${ready} of ${A.chapters.length} chapters ready`;
   }
+  // settings link in every header
+  const nav = document.querySelector('nav.crumbs');
+  if (nav && !nav.querySelector('[data-set]')) nav.insertAdjacentHTML('beforeend', `<a data-set href="${root}/settings.html">⚙️ Settings</a>`);
+  // class progress card on the home page
+  if (page === 'home' && window.BM) {
+    const sum = BM.summary(), any = BM.results().length, top = sum.slice().sort((a, b) => b.game - a.game).slice(0, 5);
+    const courses = document.querySelector('.courses');
+    if (courses) courses.insertAdjacentHTML('afterend', `<section class="sec"><div style="background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;color:var(--ink)"><h2 style="margin:0 0 6px">👩🏾‍🎓 Class progress</h2>
+      ${any ? `<div style="display:grid;gap:8px;margin:10px 0">${top.map((e, i) => `<div style="display:flex;align-items:center;gap:10px">${BM.avatar(e.s.name, 34)}<b style="flex:1">${i === 0 && e.game ? '🏆 ' : ''}${esc(e.s.name)}</b><span>${e.game} game points${e.quiz[1] ? ' · quizzes ' + Math.round(e.quiz[0] / e.quiz[1] * 100) + '%' : ''}</span></div>`).join('')}</div>`
+        : `<p>${sum.length} students in your class. Scores appear here once your class plays the games, takes a quiz or answers topic questions.</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${sum.map((e) => BM.avatar(e.s.name, 34)).join('')}</div>`}
+      <a class="btn pri" href="./settings.html">⚙️ Manage class, photos and progress</a></div></section>`);
+  }
+  // installable offline app
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) window.addEventListener('load', () => navigator.serviceWorker.register(root + '/sw.js').catch(() => {}));
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.BMinstall = e; window.dispatchEvent(new Event('bm-install-ready')); const b = document.getElementById('homeInstall'); if (b) b.hidden = false; });
+  if (page === 'home') { const hero = document.querySelector('.hero'); if (hero) { hero.insertAdjacentHTML('beforeend', '<button class="btn pri" id="homeInstall" hidden>📲 Install the app</button>'); document.getElementById('homeInstall').onclick = () => { if (window.BMinstall) { window.BMinstall.prompt(); window.BMinstall = null; document.getElementById('homeInstall').hidden = true; } }; } }
   document.querySelectorAll('[data-brand]').forEach((e) => (e.textContent = S.brand));
   document.querySelectorAll('[data-yt]').forEach((e) => (e.href = S.youtube));
   const y = document.getElementById('yr'); if (y) y.textContent = new Date().getFullYear();
