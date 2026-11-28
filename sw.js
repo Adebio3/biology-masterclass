@@ -1,5 +1,5 @@
 /* Biology Masterclass service worker: offline support */
-const V = 'bm-v1';
+const V = 'bm-v2';
 const CORE = [
 "./",
 "index.html",

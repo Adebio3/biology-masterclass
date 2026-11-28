@@ -64,12 +64,20 @@
   if (nav && !nav.querySelector('[data-set]')) nav.insertAdjacentHTML('beforeend', `<a data-set href="${root}/settings.html">⚙️ Settings</a>`);
   // class progress card on the home page
   if (page === 'home' && window.BM) {
-    const sum = BM.summary(), any = BM.results().length, top = sum.slice().sort((a, b) => b.game - a.game).slice(0, 5);
+    const keep = window.BM_CLS, cards = BM.classes().map((c) => {
+      const sum = BM.summary(c.id); window.BM_CLS = c.id;
+      const top = sum.slice().sort((a, b) => b.game - a.game)[0], any = sum.some((e) => e.game || e.quiz[2] || e.prac[2]);
+      const html = `<a href="./settings.html" data-c="${c.id}" class="bm-ccard" style="display:block;border:1px solid var(--line);border-radius:16px;padding:14px;color:var(--ink);text-decoration:none;background:var(--bg)"><b style="font-size:17px">${esc(c.name)}</b><div style="margin:2px 0 8px;color:var(--muted);font-size:14px">${c.size} student${c.size === 1 ? '' : 's'}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;min-height:30px">${sum.slice(0, 8).map((e) => BM.avatar(e.s.name, 28)).join('')}${c.size > 8 ? `<span style="color:var(--muted)">+${c.size - 8}</span>` : ''}</div>
+        <div style="margin-top:8px;font-size:14px">${any && top ? `🏆 ${esc(top.s.name)}: ${top.game} game points` : c.size ? 'No scores yet' : 'Add students in Settings'}</div></a>`;
+      return html;
+    });
+    window.BM_CLS = keep;
     const courses = document.querySelector('.courses');
-    if (courses) courses.insertAdjacentHTML('afterend', `<section class="sec"><div style="background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;color:var(--ink)"><h2 style="margin:0 0 6px">👩🏾‍🎓 Class progress</h2>
-      ${any ? `<div style="display:grid;gap:8px;margin:10px 0">${top.map((e, i) => `<div style="display:flex;align-items:center;gap:10px">${BM.avatar(e.s.name, 34)}<b style="flex:1">${i === 0 && e.game ? '🏆 ' : ''}${esc(e.s.name)}</b><span>${e.game} game points${e.quiz[1] ? ' · quizzes ' + Math.round(e.quiz[0] / e.quiz[1] * 100) + '%' : ''}</span></div>`).join('')}</div>`
-        : `<p>${sum.length} students in your class. Scores appear here once your class plays the games, takes a quiz or answers topic questions.</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${sum.map((e) => BM.avatar(e.s.name, 34)).join('')}</div>`}
-      <a class="btn pri" href="./settings.html">⚙️ Manage class, photos and progress</a></div></section>`);
+    if (courses) courses.insertAdjacentHTML('afterend', `<section class="sec"><div style="background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;color:var(--ink)"><h2 style="margin:0 0 6px">👩🏾‍🎓 My classes</h2><p style="margin:0 0 12px;color:var(--muted)">Tap a class to manage its students, photos and progress.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">${cards.join('')}</div>
+      <p style="margin:14px 0 0"><a class="btn pri" href="./settings.html">⚙️ Settings</a></p></div></section>`);
+    document.querySelectorAll('.bm-ccard').forEach((a) => a.addEventListener('click', () => BM.setCur(a.dataset.c)));
   }
   // installable offline app
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) window.addEventListener('load', () => navigator.serviceWorker.register(root + '/sw.js').catch(() => {}));

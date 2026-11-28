@@ -5,6 +5,7 @@
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="stylesheet" href="./assets/fonts.css"><link rel="stylesheet" href="./assets/style.css">
 <style>
+.ctabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ctabs button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:9px 16px;font:700 15px inherit;cursor:pointer;color:var(--ink)}.ctabs button[aria-pressed=true]{background:var(--brand);border-color:var(--brand);color:#fff}.ctabs small{font-weight:400;opacity:.8}
 .st-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin:18px 0}
 .st-card h2{margin:0 0 6px}
 .kids{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
@@ -33,18 +34,21 @@ table.prog tr.row:hover{background:var(--soft)}
 <section class="hero" style="padding-bottom:4px"><h1>Settings</h1><p>Manage your class list and photos, see each student’s progress, back up your data, and install the app.</p></section>
 <p class="pv">🔒 <b>Private to this device.</b> Names, photos and scores are saved only in this browser on this device. Nothing is uploaded. To move them to another device, use <b>Backup</b> below.</p>
 
-<section class="st-card" id="class"><h2>👩🏾‍🎓 Your class</h2><p class="note">These names and pictures are used by the player caller in every chapter’s games, and in the name lists for quizzes and topic questions.</p>
+<section class="st-card" id="classes"><h2>🏫 Classes</h2><p class="note">Each class has its own students, photos and results. Chapters 1–11 open with <b>AS Level</b> and Chapters 12–19 with <b>A Level</b>; you can switch class in any game, quiz or topic-question page.</p>
+<div class="ctabs" id="ctabs" role="group" aria-label="Choose a class"></div>
+<details><summary>Rename, add or delete a class</summary><div class="addrow"><input type="text" id="cName" maxlength="30" aria-label="Class name"><button class="btn" id="cRen">Rename this class</button><button class="btn warnbtn" id="cDel">Delete this class</button></div><div class="addrow"><input type="text" id="cNew" placeholder="New class name, e.g. IGCSE 3" maxlength="30"><button class="btn" id="cAdd">Add class</button></div></details></section>
+<section class="st-card" id="class"><h2>👩🏾‍🎓 Students in <span class="cn"></span></h2><p class="note">These names and pictures are used by the player caller in every chapter’s games, and in the name lists for quizzes and topic questions.</p>
 <div class="addrow"><input type="text" id="newName" placeholder="Student’s name" maxlength="40"><label class="btn mini" for="newPhoto">📷 Add photo</label><input type="file" id="newPhoto" accept="image/*" hidden><span id="newPrev"></span><button class="btn pri" id="addBtn">Add student</button></div>
 <details style="margin-top:10px"><summary>Add several names at once</summary><textarea class="bulk" id="bulk" placeholder="One name per line"></textarea><div class="row"><button class="btn" id="bulkBtn">Add these names</button><button class="btn" id="restore">Add back the original 7 names</button></div></details>
 <div class="kids" id="kids"></div></section>
 
-<section class="st-card" id="progress"><h2>📊 Progress</h2><p class="note">Game points are counted when you award them in the class games. Quiz and topic-question scores are saved when a student picks their name before starting. Tap a student to see the chapters.</p>
+<section class="st-card" id="progress"><h2>📊 Progress: <span class="cn"></span></h2><p class="note">Game points are counted when you award them in the class games. Quiz and topic-question scores are saved when a student picks their name before starting. Tap a student to see the chapters.</p>
 <div class="stat" id="stat"></div>
 <div class="row" style="align-items:center"><label>Show: <select id="chSel" style="font-size:15px;padding:6px;border-radius:8px"></select></label><button class="btn mini" id="csv">⬇️ Download as spreadsheet (CSV)</button><button class="btn mini" onclick="print()">🖨 Print</button></div>
 <div class="scroll"><table class="prog"><thead><tr><th data-k="name">Student</th><th data-k="game">Game points</th><th data-k="quiz">Quizzes</th><th data-k="prac">Topic questions</th><th data-k="last">Last active</th></tr></thead><tbody id="tb"></tbody></table></div></section>
 
-<section class="st-card" id="backup"><h2>💾 Backup</h2><p class="note">Save a backup file of your class, photos and results. Open it on another phone or computer with <b>Restore</b>.</p>
-<div class="row"><button class="btn pri" id="exp">Download backup</button><label class="btn" for="imp">Restore from a backup file</label><input type="file" id="imp" accept=".json,application/json" hidden><button class="btn warnbtn" id="clr">Clear all results</button></div><p id="bmsg" class="note"></p></section>
+<section class="st-card" id="backup"><h2>💾 Backup</h2><p class="note">Save one backup file with all your classes, photos and results. Open it on another phone or computer with <b>Restore</b>.</p>
+<div class="row"><button class="btn pri" id="exp">Download backup</button><label class="btn" for="imp">Restore from a backup file</label><input type="file" id="imp" accept=".json,application/json" hidden><button class="btn warnbtn" id="clr">Clear results for this class</button></div><p id="bmsg" class="note"></p></section>
 
 <section class="st-card" id="app"><h2>📲 App</h2><p class="note">Install Biology Masterclass as an app on your phone, tablet or computer. After the first visit it works offline: lessons, simulations, games, flashcards and topic questions.</p>
 <div class="row"><button class="btn pri" id="inst" hidden>Install the app</button><button class="btn" id="cacheAll">Download everything for offline use</button></div>
@@ -58,6 +62,21 @@ table.prog tr.row:hover{background:var(--soft)}
   var newPhoto = '';
   function sure(btn, label, fn) { if (btn.dataset.sure) { fn(); return; } btn.dataset.sure = 1; var t = btn.textContent; btn.textContent = label; setTimeout(function () { delete btn.dataset.sure; btn.textContent = t; }, 3000); }
 
+  /* ---------- classes ---------- */
+  function renderClasses() {
+    var cur = BM.cur();
+    $('#ctabs').innerHTML = BM.classes().map(function (c) { return '<button data-c="' + c.id + '" aria-pressed="' + (c.id === cur) + '">' + esc(c.name) + ' <small>(' + c.size + ')</small></button>'; }).join('');
+    document.querySelectorAll('.cn').forEach(function (e) { e.textContent = BM.className(); });
+    $('#cName').value = BM.className();
+    var ig = /^ig/.test(cur), list = ((window.SITE && SITE.courses[ig ? 'igcse' : 'alevel'].chapters) || []).filter(function (c) { return ig || (cur === 'as' ? c.n <= 11 : cur === 'a2' ? c.n >= 12 : true); });
+    $('#chSel').innerHTML = '<option value="0">All chapters</option>' + list.map(function (c) { return '<option value="' + c.n + '">Chapter ' + c.n + ': ' + esc(c.title) + '</option>'; }).join('');
+  }
+  function all() { renderClasses(); renderKids(); renderProg(); }
+  $('#ctabs').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; BM.setCur(b.dataset.c); open = {}; all(); };
+  $('#cRen').onclick = function () { BM.renameClass(BM.cur(), $('#cName').value); all(); };
+  $('#cAdd').onclick = function () { var id = BM.addClass($('#cNew').value); if (id) { BM.setCur(id); $('#cNew').value = ''; all(); } };
+  $('#cDel').onclick = function () { if (BM.classes().length < 2) return; sure($('#cDel'), 'Tap again: deletes its students and results', function () { BM.removeClass(BM.cur()); BM.setCur(BM.classes()[0].id); all(); $('#cDel').textContent = 'Delete this class'; }); };
+
   /* ---------- class list ---------- */
   function renderKids() {
     var r = BM.roster();
@@ -67,24 +86,22 @@ table.prog tr.row:hover{background:var(--soft)}
   }
   $('#kids').addEventListener('change', function (e) {
     var card = e.target.closest('.kid'); if (!card) return; var id = card.dataset.id;
-    if (e.target.type === 'file' && e.target.files[0]) BM.photoFromFile(e.target.files[0], function (p) { if (p) { BM.update(id, { photo: p }); renderKids(); renderProg(); } });
-    if (e.target.type === 'text') { var v = e.target.value.trim(), other = BM.byName(v); if (!v || (other && other.id !== id)) { e.target.value = BM.roster().filter(function (s) { return s.id === id; })[0].name; return; } BM.update(id, { name: v }); renderKids(); renderProg(); }
+    if (e.target.type === 'file' && e.target.files[0]) BM.photoFromFile(e.target.files[0], function (p) { if (p) { BM.update(id, { photo: p }); all(); } });
+    if (e.target.type === 'text') { var v = e.target.value.trim(), other = BM.byName(v); if (!v || (other && other.id !== id)) { e.target.value = BM.roster().filter(function (s) { return s.id === id; })[0].name; return; } BM.update(id, { name: v }); all(); }
   });
   $('#kids').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return; var id = b.closest('.kid').dataset.id;
-    if (b.dataset.a === 'nophoto') { BM.update(id, { photo: '' }); renderKids(); renderProg(); }
-    if (b.dataset.a === 'del') sure(b, 'Tap again', function () { BM.remove(id); renderKids(); renderProg(); });
+    if (b.dataset.a === 'nophoto') { BM.update(id, { photo: '' }); all(); }
+    if (b.dataset.a === 'del') sure(b, 'Tap again', function () { BM.remove(id); all(); });
   });
   $('#newPhoto').onchange = function (e) { var f = e.target.files[0]; if (f) BM.photoFromFile(f, function (p) { newPhoto = p; $('#newPrev').innerHTML = p ? '<img src="' + p + '" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;vertical-align:middle">' : ''; }); };
-  function addOne() { var n = $('#newName').value.trim(); if (!n) { $('#newName').focus(); return; } if (BM.byName(n)) { alert(n + ' is already in the class.'); return; } BM.add(n, newPhoto); newPhoto = ''; $('#newPrev').innerHTML = ''; $('#newName').value = ''; $('#newPhoto').value = ''; renderKids(); renderProg(); $('#newName').focus(); }
+  function addOne() { var n = $('#newName').value.trim(); if (!n) { $('#newName').focus(); return; } if (BM.byName(n)) { alert(n + ' is already in the class.'); return; } BM.add(n, newPhoto); newPhoto = ''; $('#newPrev').innerHTML = ''; $('#newName').value = ''; $('#newPhoto').value = ''; all(); $('#newName').focus(); }
   $('#addBtn').onclick = addOne; $('#newName').onkeydown = function (e) { if (e.key === 'Enter') addOne(); };
-  $('#bulkBtn').onclick = function () { $('#bulk').value.split('\n').forEach(function (n) { BM.add(n); }); $('#bulk').value = ''; renderKids(); renderProg(); };
-  $('#restore').onclick = function () { BM.DEFAULT.forEach(function (n) { BM.add(n); }); renderKids(); renderProg(); };
+  $('#bulkBtn').onclick = function () { $('#bulk').value.split('\n').forEach(function (n) { BM.add(n); }); $('#bulk').value = ''; all(); };
+  $('#restore').onclick = function () { BM.DEFAULT.forEach(function (n) { BM.add(n); }); all(); };
 
   /* ---------- progress ---------- */
   var sortK = 'game', sortDir = -1, open = {};
-  var chs = (window.SITE && SITE.courses.alevel.chapters) || [];
-  $('#chSel').innerHTML = '<option value="0">All chapters</option>' + chs.map(function (c) { return '<option value="' + c.n + '">Chapter ' + c.n + ': ' + esc(c.title) + '</option>'; }).join('');
   $('#chSel').onchange = renderProg;
   var pct = function (b) { return b[1] ? Math.round(b[0] / b[1] * 100) : null; };
   var when = function (t) { if (!t) return '—'; var d = Math.round((Date.now() - t) / 864e5); return d < 1 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago'; };
@@ -111,13 +128,13 @@ table.prog tr.row:hover{background:var(--soft)}
     var R = rows(), lines = [['Student', 'Game points', 'Quiz average %', 'Quizzes', 'Topic questions average %', 'Topic question sets', 'Last active']];
     R.forEach(function (r) { lines.push([r.s.name, r.game, r.quiz == null ? '' : r.quiz, r.qn, r.prac == null ? '' : r.prac, r.pn, r.last ? new Date(r.last).toLocaleDateString() : '']); });
     var csv = lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'class-progress.csv'; a.click();
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = BM.className().replace(/\W+/g, '-') + '-progress.csv'; a.click();
   };
 
   /* ---------- backup ---------- */
   $('#exp').onclick = function () { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([BM.exportData()], { type: 'application/json' })); a.download = 'biology-masterclass-backup-' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); $('#bmsg').textContent = 'Backup downloaded. Keep the file somewhere safe.'; };
-  $('#imp').onchange = function (e) { var f = e.target.files[0]; if (!f) return; var fr = new FileReader(); fr.onload = function () { try { BM.importData(fr.result); renderKids(); renderProg(); $('#bmsg').textContent = '✅ Backup restored.'; } catch (err) { $('#bmsg').textContent = '❌ ' + err.message; } }; fr.readAsText(f); };
-  $('#clr').onclick = function () { sure($('#clr'), 'Tap again to clear all results', function () { BM.clearResults(); renderProg(); $('#bmsg').textContent = 'All results cleared. Your class list was kept.'; $('#clr').textContent = 'Clear all results'; }); };
+  $('#imp').onchange = function (e) { var f = e.target.files[0]; if (!f) return; var fr = new FileReader(); fr.onload = function () { try { BM.importData(fr.result); all(); $('#bmsg').textContent = '✅ Backup restored.'; } catch (err) { $('#bmsg').textContent = '❌ ' + err.message; } }; fr.readAsText(f); };
+  $('#clr').onclick = function () { sure($('#clr'), 'Tap again to clear all results', function () { BM.clearResults(); renderProg(); $('#bmsg').textContent = 'Results for ' + BM.className() + ' cleared. The students were kept.'; $('#clr').textContent = 'Clear results for this class'; }); };
 
   /* ---------- app ---------- */
   var ios = /iphone|ipad|ipod/i.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
@@ -128,6 +145,6 @@ table.prog tr.row:hover{background:var(--soft)}
   $('#cacheAll').onclick = function () { if (!navigator.serviceWorker || !navigator.serviceWorker.controller) { $('#instMsg').textContent = 'Offline download needs the website address (https). Reload the page once and try again.'; return; } $('#instMsg').textContent = 'Downloading… keep this page open.'; navigator.serviceWorker.controller.postMessage('cache-all'); };
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', function (e) { if (e.data && e.data.cached != null) $('#instMsg').textContent = '✅ Ready for offline use: ' + e.data.cached + ' files saved on this device.'; });
 
-  renderKids(); renderProg();
+  all();
 })();
 </script></body></html>

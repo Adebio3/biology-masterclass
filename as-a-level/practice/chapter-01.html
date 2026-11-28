@@ -43,7 +43,7 @@ document.getElementById('mark').onclick=()=>{let s=0;qs.forEach(q=>{const a=+q.d
 document.getElementById('reset').onclick=()=>{qs.forEach(q=>{q.classList.remove('ok','no');q.querySelectorAll('input').forEach(i=>i.checked=false);q.querySelectorAll('label').forEach(l=>l.classList.remove('pick','ans'));q.querySelector('.why').hidden=true});document.getElementById('score').textContent=''};
 </script><script src="../../assets/classroom.js"></script><script>
 (function(){var mk=document.getElementById('mark'),row=mk.parentNode,N=+(document.body.dataset.ch||0),done=false;
-row.insertAdjacentHTML('beforebegin',BM.picker('Who is answering?'));var who=row.previousElementSibling.querySelector('select');who.onchange=function(){BM.last(who.value)};
+window.BM_CLS=BM.classForChapter(N,'al');row.insertAdjacentHTML('beforebegin',BM.picker('Who is answering?'));var pk=row.previousElementSibling,who=pk.querySelector('.bm-who');BM.bindPicker(pk,N,'al');
 mk.addEventListener('click',function(){var m=(document.getElementById('score').textContent||'').match(/(\d+)\s*\/\s*(\d+)/);if(!m||!who.value||done)return;done=true;BM.record({name:who.value,k:'practice',ch:N,sc:+m[1],mx:+m[2]});document.getElementById('score').insertAdjacentHTML('afterend','<span class="note" id="saved"> ✅ Saved to '+who.value.replace(/</g,'&lt;')+'’s record</span>')});
 document.getElementById('reset').addEventListener('click',function(){done=false;var s=document.getElementById('saved');if(s)s.remove()});
 if('serviceWorker'in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('../../sw.js').catch(function(){});})();
